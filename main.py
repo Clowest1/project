@@ -1,7 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
 from fastapi import FastAPI, Depends, HTTPException, status, Body, Response, File as FastAPIFile, UploadFile, Form, BackgroundTasks
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 from database import AsyncSessionLocal, engine
 from models import Base, User, Group, File, FilePermission, PermissionTypes, group_user_association, FileLink, FileVersion
@@ -34,6 +34,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+security = HTTPBasic()
 
 # Проверка подключения к базе данных при старте
 async def test_connection():
@@ -103,6 +105,24 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     user = result.scalars().first()
     if user is None:
         raise credentials_exception
+    return user
+
+
+# Функция для проверки Basic Auth
+async def get_current_user_basic(
+    credentials: HTTPBasicCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Проверяет пользователя через Basic Auth.
+    """
+    user = await authenticate_user(credentials.username, credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
     return user
 
 # Создание группы
@@ -565,9 +585,13 @@ async def check_file_permission(db: AsyncSession, file_id: int, user_id: int, re
     return True
 
 
-# SSE для обновлений файла
+# Обновлённый эндпоинт для SSE с поддержкой Basic Auth как альтернативы JWT
 @app.get("/files/{file_id}/stream")
-async def stream_file(file_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def stream_file(
+    file_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_basic),  # Используем только Basic Auth
+):
     await check_file_permission(db, file_id, current_user.id, 'read')
     return StreamingResponse(event_stream(file_id), media_type="text/event-stream")
 
