@@ -33,7 +33,7 @@ PostgreSQL 13+
 
 Git
 
-Примечание для пользователей Windows
+Примечание для пользователей Windows:
 Проект использует асинхронный код (asyncio, psycopg3), который может вызывать проблемы на Windows из-за ограничений событийного цикла и драйверов PostgreSQL. Рекомендуется использовать Windows Subsystem for Linux (WSL) для стабильной работы:
 Установите WSL: wsl --install в PowerShell (требуется Windows 10/11).
 
@@ -88,7 +88,7 @@ bash
 
 uvicorn main:app --reload --port 8001
 
-Использование
+Использование:
 API Эндпоинты
 Регистрация: POST /register
 Тело: {"username": "testuser", "password": "testpassword"}
@@ -109,7 +109,7 @@ API Эндпоинты
 Поток изменений: GET /files/{file_id}/stream
 Basic Auth: testuser:testpassword (или JWT)
 
-Тестирование SSE
+Тестирование SSE:
 Создайте файл через POST /files/.
 
 Откройте в браузере: http://localhost:8001/files/{file_id}/stream.
@@ -118,9 +118,9 @@ Basic Auth: testuser:testpassword (или JWT)
 
 Обновите файл через PUT /files/{file_id} и наблюдайте изменения в реальном времени.
 
-Структура проекта
+Структура проекта:
 
-collaborative-text-editor/
+project/
 ├── main.py         # Основной файл приложения
 ├── sse.py          # Логика Server-Sent Events
 ├── auth.py         # Авторизация
@@ -131,7 +131,7 @@ collaborative-text-editor/
 ├── .gitignore      # Игнорируемые файлы
 └── requirements.txt # Зависимости
 
-Текущие ограничения
+Текущие ограничения:
 Basic Auth используется для тестирования и будет заменён на JWT в продакшене.
 
 Проблемы совместимости с Windows без WSL из-за асинхронного кода.
